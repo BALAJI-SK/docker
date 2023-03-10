@@ -14,6 +14,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_DB: postgres
       NODE_ENV: docker
+
     ports:
       - "5433:5432"
     volumes:
@@ -45,6 +46,8 @@ services:
       - "5000:5000"
     environment:
       NODE_ENV: docker
+      HASH: SUPPPPPPWORLDS
+      SALT_ROUNDS: 10
 
   contentserver:
     build:
@@ -93,3 +96,5 @@ services:
       DB_HOST: contentdb
       POSTGRESQL_DB_NAME: postgres
       NODE_ENV: docker
+      HASH: SUPPPPPPWORLDS
+      SALT_ROUNDS: 10
