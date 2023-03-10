@@ -1,0 +1,95 @@
+version: "3"
+services:
+  redis:
+    image: redis
+
+    ports:
+      - "6379:6379"
+
+  authdb:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      NODE_ENV: docker
+    ports:
+      - "5433:5432"
+    volumes:
+      - ../Authentication-Evaluation4/database/data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  authmigration:
+    build:
+      context: ../Authentication-Evaluation4
+      dockerfile: DockerFile.migration
+    depends_on:
+      authdb:
+        condition: service_healthy
+    environment:
+      NODE_ENV: docker
+
+  authserver:
+    build:
+      context: ../Authentication-Evaluation4
+      dockerfile: DockerFile
+    depends_on:
+      - authdb
+      - redis
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: docker
+
+  contentserver:
+    build:
+      context: ../Backend-Evaluation4
+      dockerfile: DockerFile
+    depends_on:
+      - authdb
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: docker
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_HOST: contentdb
+      POSTGRESQL_DB_NAME: postgres
+
+  contentdb:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+      NODE_ENV: docker
+    ports:
+      - "5434:5432"
+    volumes:
+      - ../Backend-Evaluation4/database/data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  contentmigration:
+    build:
+      context: ../Backend-Evaluation4
+      dockerfile: DockerFile.migration
+    depends_on:
+      contentdb:
+        condition: service_healthy
+    environment:
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_HOST: contentdb
+      POSTGRESQL_DB_NAME: postgres
+      NODE_ENV: docker
